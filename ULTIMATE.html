@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#050505">
+    <title>For Tanishka</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <!-- Lenis Smooth Scroll -->
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            100: '#F9F1D8',
+                            300: '#EEDC9A',
+                            400: '#E2C872',
+                            500: '#D4AF37',
+                            600: '#C5A028',
+                            700: '#AA8C2C',
+                            900: '#5E4B10',
+                        },
+                        obsidian: '#050505',
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Montserrat', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 3s infinite',
+                        'shimmer': 'shimmer 3s infinite linear',
+                        'grain': 'grain 8s steps(10) infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        shimmer: {
+                            '0%': { transform: 'translateX(-150%) skewX(-15deg)' },
+                            '50%, 100%': { transform: 'translateX(150%) skewX(-15deg)' }
+                        },
+                        grain: {
+                            '0%, 100%': { transform: 'translate(0, 0)' },
+                            '10%': { transform: 'translate(-5%, -10%)' },
+                            '20%': { transform: 'translate(-15%, 5%)' },
+                            '30%': { transform: 'translate(7%, -25%)' },
+                            '40%': { transform: 'translate(-5%, 25%)' },
+                            '50%': { transform: 'translate(-15%, 10%)' },
+                            '60%': { transform: 'translate(15%, 0%)' },
+                            '70%': { transform: 'translate(0%, 15%)' },
+                            '80%': { transform: 'translate(3%, 35%)' },
+                            '90%': { transform: 'translate(-10%, 10%)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #f5f5f5;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            animation: grain 7s steps(10) infinite;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .text-gradient-gold {
+            background: linear-gradient(to right, #F9F1D8, #F4E4BA, #D4AF37, #AA8C2C, #F9F1D8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 300% auto;
+            animation: shine 6s linear infinite;
+        }
+
+        @keyframes shine { to { background-position: 300% center; } }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            transform: translateZ(0);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
+            transform: skewX(-15deg) translateX(-150%);
+            animation: shimmer 5s infinite;
+        }
+
+        .touch-scale:active {
+            transform: scale(0.96);
+            opacity: 0.9;
+            transition: transform 0.1s;
+        }
+
+        .signal-dot {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 8px;
+            height: 8px;
+            background-color: #fff;
+            border-radius: 50%;
+            transform:translate(-50%, -50%);
+            box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.9);
+            opacity: 0;
+            z-index: 20;
+        }
+
+        .typing::after {
+            content: '|';
+            animation: blink 1s step-start infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Magnetic Button Class */
+        .magnetic-btn {
+            display: inline-block;
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        /* Music Equalizer Animation */
+        .equalizer {
+            display: flex;
+            align-items: center;
+            height: 10px;
+            gap: 2px;
+        }
+        .bar {
+            width: 2px;
+            background-color: #D4AF37;
+            animation: equalize 1s infinite;
+        }
+        .bar:nth-child(1) { animation-delay: 0.1s; height: 4px; }
+        .bar:nth-child(2) { animation-delay: 0.3s; height: 8px; }
+        .bar:nth-child(3) { animation-delay: 0.5s; height: 6px; }
+        .bar:nth-child(4) { animation-delay: 0.2s; height: 5px; }
+
+        @keyframes equalize {
+            0% { transform: scaleY(1); }
+            50% { transform: scaleY(2); }
+            100% { transform: scaleY(1); }
+        }
+        
+        .paused .bar {
+            animation-play-state: paused;
+            height: 2px !important;
+            transform: scaleY(1) !important;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Audio Element (Direct Download Link) -->
+    <!-- Added preload="auto" to help it load faster -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://www.dropbox.com/scl/fi/qzgu7yfu4wba0h93hbkgy/YTDown.com_YouTube_Frozy-x-DDB-K-Kompa-Parano-Slowed-Reverb_Media_PufeHy0CwIs_002_720p.mp3?rlkey=h332vxw341nhw8bpvs50qzk87&st=mxxefy5k&dl=1" type="audio/mpeg">
+    </audio>
+
+    <div class="noise-overlay"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Loading Screen -->
+    <div id="loader" class="fixed inset-0 bg-black z-50 flex flex-col justify-center items-center">
+        <h1 class="font-serif text-3xl text-gold-500 tracking-[0.3em] uppercase opacity-0" id="loader-text">Tanishka</h1>
+        <div class="w-32 h-[1px] bg-gold-900 mt-6 relative overflow-hidden">
+            <div class="absolute inset-0 bg-gold-500 w-full h-full transform -translate-x-full" id="loader-bar"></div>
+        </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="fixed top-0 w-full z-40 px-6 py-6 flex justify-between items-center pointer-events-none">
+        <div class="text-[10px] tracking-[0.2em] font-sans uppercase text-gold-300 opacity-80 pointer-events-auto magnetic-btn">The Collection</div>
+        
+        <!-- Music Toggle Button (Backup Control) -->
+        <button id="music-toggle" class="pointer-events-auto flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
+             <div class="equalizer paused" id="music-bars">
+                 <div class="bar"></div>
+                 <div class="bar"></div>
+                 <div class="bar"></div>
+                 <div class="bar"></div>
+             </div>
+        </button>
+    </nav>
+
+    <!-- Hero -->
+    <section class="min-h-screen flex flex-col justify-center px-6 relative overflow-hidden">
+        <div class="absolute top-1/4 right-0 w-56 h-56 bg-gold-500 rounded-full mix-blend-overlay filter blur-[90px] opacity-10 animate-pulse"></div>
+        <div class="absolute bottom-1/4 left-0 w-72 h-72 bg-purple-900 rounded-full mix-blend-overlay filter blur-[110px] opacity-10"></div>
+
+        <div class="z-10 mt-[-10vh]">
+            <p class="hero-anim font-sans text-gold-400 text-[10px] tracking-[0.3em] uppercase mb-4 pl-1">A Gift For Her</p>
+            <h1 class="hero-anim font-serif text-5xl md:text-8xl text-white leading-tight mb-8">
+                My Dearest <br>
+                <!-- Scramble Target -->
+                <span class="text-gradient-gold italic relative inline-block pb-2 scramble-text" data-text="Tanishka">
+                    Tanishka
+                    <svg class="absolute w-full h-4 -bottom-2 left-0 text-gold-500 opacity-50" viewBox="0 0 100 10" preserveAspectRatio="none">
+                        <path d="M0 5 Q 50 15 100 5" stroke="currentColor" stroke-width="1.5" fill="none" />
+                    </svg>
+                </span>
+            </h1>
+            <div class="hero-anim max-w-sm border-l border-gold-900/50 pl-5 py-2">
+                <p class="font-sans text-gray-400 font-light leading-relaxed text-sm">
+                    Distance is just a test to see how far love can travel. No matter how many miles lie between us, you are always right here.
+                </p>
+            </div>
+        </div>
+
+        <div class="absolute bottom-10 left-0 right-0 text-center z-10">
+             <p class="font-sans text-[9px] text-gray-600 tracking-widest uppercase mb-3">Scroll to Open</p>
+             <i data-lucide="chevron-down" class="w-5 h-5 text-gold-500 mx-auto animate-bounce opacity-50"></i>
+        </div>
+    </section>
+
+    <!-- Distance Vis -->
+    <section class="min-h-[70vh] flex flex-col justify-center items-center px-6 py-20 relative">
+        <div class="text-center mb-20 scroll-reveal">
+            <h2 class="font-serif text-3xl text-white mb-2 scramble-text" data-text="Miles Apart">Miles Apart</h2>
+            <p class="font-sans text-gold-500 text-[10px] tracking-widest uppercase">Connected by soul</p>
+        </div>
+
+        <div class="w-full max-w-xs relative h-32 flex items-center justify-between scroll-reveal">
+            <!-- Aniket -->
+            <div class="flex flex-col items-center z-10">
+                <div class="w-3 h-3 bg-gold-500 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.8)]"></div>
+                <span class="mt-4 font-sans text-[10px] text-gray-500 tracking-widest font-medium">ANIKET</span>
+            </div>
+
+            <!-- Line -->
+            <div class="absolute left-4 right-4 top-1/2 h-[1px] bg-gray-800/50 -z-0"></div>
+            <div id="connection-line" class="absolute left-4 top-1/2 h-[1px] bg-gradient-to-r from-gold-500/80 via-white to-gold-500/80 shadow-[0_0_15px_rgba(212,175,55,0.6)] -z-0 w-0">
+                <div class="signal-dot"></div>
+            </div>
+
+            <!-- Tanishka -->
+            <div class="flex flex-col items-center z-10">
+                <div class="relative">
+                    <div id="tanishka-dot" class="w-3 h-3 border border-gold-500 bg-obsidian rounded-full shadow-[0_0_15px_rgba(212,175,55,0.2)] z-20 relative transition-all duration-500"></div>
+                    <div id="tanishka-ping" class="absolute inset-[-8px] border border-gold-500/30 rounded-full animate-ping opacity-0"></div>
+                    <div id="tanishka-glow-ring" class="absolute inset-[-12px] bg-gold-500/20 rounded-full blur-md opacity-0 transition-opacity duration-1000"></div>
+                </div>
+                <span class="mt-4 font-sans text-[10px] text-gold-300 tracking-widest font-medium">TANISHKA</span>
+            </div>
+        </div>
+
+        <div class="mt-16 text-center max-w-xs mx-auto scroll-reveal">
+            <p class="font-serif text-lg italic text-gold-100/90 leading-relaxed">
+                "Distance can’t dull what I feel for you."
+            </p>
+        </div>
+    </section>
+
+    <!-- Promises Carousel -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="px-6 mb-10 flex items-end justify-between scroll-reveal">
+            <h2 class="font-serif text-3xl text-white">My Promises</h2>
+            <span class="text-[10px] text-gray-500 font-sans tracking-widest uppercase">Swipe &rarr;</span>
+        </div>
+        
+        <div class="flex overflow-x-auto space-x-5 pb-12 px-6 snap-x snap-mandatory hide-scrollbar z-10 relative">
+            <!-- Card 1 -->
+            <div class="min-w-[85vw] snap-center glass-card p-8 rounded-2xl flex flex-col justify-center h-[340px] scroll-reveal relative animate-float">
+                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-gold-500 rounded-full opacity-5 blur-3xl"></div>
+                <div class="relative z-10">
+                    <span class="text-gold-600 font-mono text-xs mb-5 block tracking-widest">01</span>
+                    <h3 class="font-serif text-2xl text-white mb-5">I’m Here For You</h3>
+                    <p class="font-sans text-sm text-gray-400 leading-8 font-light">
+                        I can’t always be next to you, but I promise you'll never feel alone because of me. If life gets heavy, lean on me — even from miles away.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="min-w-[85vw] snap-center glass-card p-8 rounded-2xl flex flex-col justify-center h-[340px] scroll-reveal relative animate-float-delayed">
+                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-gold-500 rounded-full opacity-5 blur-3xl"></div>
+                <div class="relative z-10">
+                    <span class="text-gold-600 font-mono text-xs mb-5 block tracking-widest">02</span>
+                    <h3 class="font-serif text-2xl text-white mb-5">I See You</h3>
+                    <p class="font-sans text-sm text-gray-400 leading-8 font-light">
+                        You’re stronger, kinder, and more beautiful than you realize. I won’t let you forget that — not now, not ever.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="min-w-[85vw] snap-center glass-card p-8 rounded-2xl flex flex-col justify-center h-[340px] scroll-reveal relative animate-float">
+                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-gold-500 rounded-full opacity-5 blur-3xl"></div>
+                <div class="relative z-10">
+                    <span class="text-gold-600 font-mono text-xs mb-5 block tracking-widest">03</span>
+                    <h3 class="font-serif text-2xl text-white mb-5">I Stay</h3>
+                    <p class="font-sans text-sm text-gray-400 leading-8 font-light">
+                        No matter the distance, timing, or chaos — I’m in this with you. Not for a moment. For real.
+                    </p>
+                </div>
+            </div>
+            <div class="min-w-[4vw]"></div>
+        </div>
+    </section>
+
+    <!-- Love Letter -->
+    <section class="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-t from-black via-black/80 to-transparent relative">
+        <div class="max-w-md w-full text-center z-10">
+            <div class="mb-10 scroll-reveal">
+                <div class="w-14 h-14 rounded-full border border-gold-500/20 flex items-center justify-center mx-auto mb-6 bg-gold-500/5 backdrop-blur-sm">
+                    <i data-lucide="mail" class="w-6 h-6 text-gold-500"></i>
+                </div>
+                <h2 class="font-serif text-3xl text-white">A Note For You</h2>
+            </div>
+
+            <div class="glass-card p-8 text-left relative transition-all duration-700 scroll-reveal rounded-2xl border-t border-white/10">
+                <p class="font-serif text-xl italic text-gray-200 mb-6">
+                    "Tanishka, darling..."
+                </p>
+                
+                <div id="letter-content" class="h-0 overflow-hidden transition-all duration-700 ease-in-out">
+                    <div id="typewriter-text" class="font-sans text-sm text-gray-400 leading-loose mb-4 min-h-[150px]">
+                        <!-- Text injected via JS -->
+                    </div>
+                    
+                    <p class="font-serif text-lg text-white mt-8 text-right opacity-0 transition-opacity duration-1000" id="letter-signature">
+                        Yours always,<br>
+                        <span class="text-gold-500">Aniket</span>
+                    </p>
+                </div>
+
+                <div class="text-center mt-6">
+                    <button id="read-letter-btn" class="touch-scale py-4 px-8 bg-gold-500/10 border border-gold-500/30 rounded-full text-[10px] font-sans tracking-[0.25em] text-gold-300 uppercase w-full hover:bg-gold-500/20 transition-all magnetic-btn">
+                        Touch to Read
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-16 text-center relative z-10 border-t border-gray-900/50 bg-black">
+        <p class="font-serif text-3xl text-gold-700 mb-4 opacity-50">&infin;</p>
+        <p class="font-sans text-[9px] text-gray-600 tracking-widest uppercase">
+            Made with love for Tanishka
+        </p>
+    </footer>
+
+    <script>
+        // --- 1. Lenis Smooth Scroll Setup ---
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+
+        // --- 2. God Tier Canvas (Parallax + Constellations + Triangulation + Physics) ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let fireflies = [];
+        let ripples = [];
+        let trails = [];
+        
+        // Input state for Parallax
+        let mouse = { x: 0, y: 0 };
+        let targetX = 0;
+        let targetY = 0;
+        
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // Recenter mouse on resize to prevent jump
+            mouse.x = width / 2;
+            mouse.y = height / 2;
+        }
+
+        // Handle Touch/Mouse for Trail AND Parallax
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            createTrail(mouse.x, mouse.y);
+            
+            // Calculate parallax target (from center -1 to 1)
+            targetX = (mouse.x - width / 2) * 0.001; 
+            targetY = (mouse.y - height / 2) * 0.001;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            const t = e.touches[0];
+            mouse.x = t.clientX;
+            mouse.y = t.clientY;
+            createTrail(mouse.x, mouse.y);
+            
+            targetX = (mouse.x - width / 2) * 0.002; // More sensitive on touch
+            targetY = (mouse.y - height / 2) * 0.002;
+        });
+
+        function createTrail(x, y) {
+            for (let i = 0; i < 2; i++) {
+                trails.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    size: Math.random() * 2,
+                    life: 1,
+                    color: `212, 175, 55`
+                });
+            }
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                // Depth factor for 3D parallax (0.5 to 2.0)
+                this.depth = Math.random() * 1.5 + 0.5; 
+                this.size = Math.random() * 1.5 * this.depth; // Closer = bigger
+                this.alpha = Math.random() * 0.5 + 0.1;
+                this.t = Math.random() * Math.PI * 2;
+                this.excited = 0; // "Wake up" state
+            }
+            update() {
+                // Parallax Movement
+                const shiftX = -targetX * width * 0.05 * this.depth;
+                const shiftY = -targetY * height * 0.05 * this.depth;
+                
+                this.x = this.baseX + shiftX;
+                this.y = this.baseY + shiftY;
+
+                // Natural Float
+                this.t += 0.02;
+                this.y += Math.sin(this.t) * 0.2;
+
+                // Interaction Check
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // Excite if near
+                if (dist < 100) {
+                    this.excited = Math.min(this.excited + 0.05, 1);
+                } else {
+                    this.excited = Math.max(this.excited - 0.02, 0);
+                }
+
+                // Wrap around
+                if (this.baseX < -50) this.baseX = width + 50;
+                if (this.baseX > width + 50) this.baseX = -50;
+                if (this.baseY < -50) this.baseY = height + 50;
+                if (this.baseY > height + 50) this.baseY = -50;
+            }
+            draw() {
+                const r = 212 + (255 - 212) * this.excited;
+                const g = 175 + (255 - 175) * this.excited;
+                const b = 55 + (255 - 55) * this.excited;
+                
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.max(0, this.alpha + this.excited * 0.5)})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * (1 + this.excited), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Firefly {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1;
+                this.alpha = 0;
+                this.state = 'in'; 
+                this.timer = Math.random() * 100;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.state === 'in') {
+                    this.alpha += 0.01;
+                    if (this.alpha >= 0.6) this.state = 'wait';
+                } else if (this.state === 'wait') {
+                    this.timer--;
+                    if (this.timer <= 0) {
+                        this.state = 'out';
+                        this.timer = Math.random() * 100;
+                    }
+                } else if (this.state === 'out') {
+                    this.alpha -= 0.01;
+                    if (this.alpha <= 0) {
+                        this.state = 'in';
+                        this.x = Math.random() * width;
+                        this.y = Math.random() * height;
+                    }
+                }
+            }
+            draw() {
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 4);
+                gradient.addColorStop(0, `rgba(212, 175, 55, ${this.alpha})`);
+                gradient.addColorStop(1, `rgba(212, 175, 55, 0)`);
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = `rgba(255, 255, 200, ${this.alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Ripple {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 0;
+                this.alpha = 0.6;
+                this.speed = 15;
+            }
+            update() {
+                this.radius += this.speed;
+                this.alpha -= 0.01;
+            }
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(212, 175, 55, ${this.alpha})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        function triggerShockwave() {
+            ripples.push(new Ripple(width / 2, height / 2));
+            setTimeout(() => ripples.push(new Ripple(width / 2, height / 2)), 200);
+        }
+
+        function initCanvas() {
+            particles = [];
+            fireflies = [];
+            trails = [];
+            for (let i = 0; i < 60; i++) particles.push(new Particle()); // Increased for constellation effect
+            for (let i = 0; i < 15; i++) fireflies.push(new Firefly());
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // 1. Background Particles & Parallax
+            particles.forEach(p => { p.update(); p.draw(); });
+            fireflies.forEach(f => { f.update(); f.draw(); });
+            
+            // 2. Trail Elements
+            trails.forEach((t, index) => {
+                t.x += t.vx;
+                t.y += t.vy;
+                t.life -= 0.02;
+                t.size *= 0.95;
+                if (t.life <= 0) trails.splice(index, 1);
+                else {
+                    ctx.fillStyle = `rgba(${t.color}, ${t.life})`;
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // 3. CONSTELLATION & TRIANGULATION ENGINE
+            // Connect points and fill triangles for "Geometric Stardust"
+            ctx.lineWidth = 0.5;
+            
+            if (trails.length > 0) {
+                // Limit checks for performance
+                for (let i = 0; i < Math.min(trails.length, 20); i++) {
+                    const t = trails[i];
+                    if (t.life < 0.2) continue;
+                    
+                    // Find neighbors
+                    let neighbors = [];
+                    for (let j = 0; j < particles.length; j++) {
+                        const p = particles[j];
+                        const dx = t.x - p.x;
+                        const dy = t.y - p.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if (dist < 100) {
+                            neighbors.push(p);
+                            
+                            // Draw Line
+                            ctx.beginPath();
+                            ctx.strokeStyle = `rgba(212, 175, 55, ${0.2 * t.life})`;
+                            ctx.moveTo(t.x, t.y);
+                            ctx.lineTo(p.x, p.y);
+                            ctx.stroke();
+                        }
+                    }
+                    
+                    // Triangulation (Fill shapes)
+                    if (neighbors.length >= 2) {
+                        ctx.beginPath();
+                        ctx.fillStyle = `rgba(212, 175, 55, ${0.05 * t.life})`;
+                        ctx.moveTo(t.x, t.y);
+                        ctx.lineTo(neighbors[0].x, neighbors[0].y);
+                        ctx.lineTo(neighbors[1].x, neighbors[1].y);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+            }
+
+            // 4. Shockwaves
+            ripples.forEach((r, index) => {
+                r.update();
+                r.draw();
+                if (r.alpha <= 0) ripples.splice(index, 1);
+            });
+
+            requestAnimationFrame(animateCanvas);
+        }
+
+        window.addEventListener('resize', () => { resize(); initCanvas(); });
+        resize();
+        initCanvas();
+        animateCanvas();
+
+        // --- 3. Scramble Text Logic ---
+        class TextScramble {
+            constructor(el) {
+                this.el = el;
+                this.chars = '!<>-_\\/[]{}—=+*^?#________';
+                this.update = this.update.bind(this);
+            }
+            setText(newText) {
+                const oldText = this.el.innerText;
+                const length = Math.max(oldText.length, newText.length);
+                const promise = new Promise((resolve) => this.resolve = resolve);
+                this.queue = [];
+                for (let i = 0; i < length; i++) {
+                    const from = oldText[i] || '';
+                    const to = newText[i] || '';
+                    const start = Math.floor(Math.random() * 40);
+                    const end = start + Math.floor(Math.random() * 40);
+                    this.queue.push({ from, to, start, end });
+                }
+                cancelAnimationFrame(this.frameRequest);
+                this.frame = 0;
+                this.update();
+                return promise;
+            }
+            update() {
+                let output = '';
+                let complete = 0;
+                for (let i = 0, n = this.queue.length; i < n; i++) {
+                    let { from, to, start, end, char } = this.queue[i];
+                    if (this.frame >= end) {
+                        complete++;
+                        output += to;
+                    } else if (this.frame >= start) {
+                        if (!char || Math.random() < 0.28) {
+                            char = this.chars[Math.floor(Math.random() * this.chars.length)];
+                            this.queue[i].char = char;
+                        }
+                        output += `<span class="opacity-50">${char}</span>`;
+                    } else {
+                        output += from;
+                    }
+                }
+                this.el.innerHTML = output;
+                if (complete === this.queue.length) {
+                    this.resolve();
+                } else {
+                    this.frameRequest = requestAnimationFrame(this.update);
+                    this.frame++;
+                }
+            }
+        }
+
+
+        // --- 4. Main Animation Logic ---
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+
+            // Magnetic Buttons Logic
+            const magnets = document.querySelectorAll('.magnetic-btn');
+            magnets.forEach((btn) => {
+                btn.addEventListener('mousemove', (e) => {
+                    const rect = btn.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translate(0px, 0px)';
+                });
+            });
+
+            // Audio Logic (Improved Autoplay Strategy)
+            const audio = document.getElementById("bg-music");
+            const musicToggle = document.getElementById("music-toggle");
+            const musicBars = document.getElementById("music-bars");
+            audio.volume = 0.5;
+            
+            // Function to handle play/pause toggle manually
+            musicToggle.addEventListener('click', (e) => {
+                e.stopPropagation(); // Stop bubbling to prevent conflict with document listener
+                if (audio.paused) {
+                    audio.play().catch(err => console.log("Manual play error:", err));
+                    musicBars.classList.remove('paused');
+                } else {
+                    audio.pause();
+                    musicBars.classList.add('paused');
+                }
+            });
+
+            // Smart Auto-Start on FIRST interaction
+            let autoPlayAttempted = false;
+            
+            const unlockAudio = () => {
+                if (autoPlayAttempted) return;
+                autoPlayAttempted = true;
+                
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        musicBars.classList.remove('paused');
+                        // Remove listeners once successful
+                        document.removeEventListener('click', unlockAudio);
+                        document.removeEventListener('touchstart', unlockAudio);
+                        window.removeEventListener('scroll', unlockAudio);
+                    }).catch(error => {
+                        console.log("Auto-play prevented or aborted:", error);
+                        // If it was purely a policy block, we might want to try again.
+                        // If it was an abort (pause called), we accept it.
+                        if (error.name === 'NotAllowedError') {
+                            autoPlayAttempted = false; // Allow retry
+                        }
+                    });
+                }
+            };
+
+            // Attempt to attach the unlock to every possible first interaction
+            document.addEventListener('click', unlockAudio);
+            document.addEventListener('touchstart', unlockAudio);
+            window.addEventListener('scroll', unlockAudio);
+
+
+            // Loader Sequence
+            const tlLoader = gsap.timeline();
+            tlLoader.to("#loader-text", { opacity: 1, duration: 1.2 })
+                    .to("#loader-bar", { x: "0%", duration: 1.5, ease: "expo.inOut" }, "-=0.8")
+                    .to("#loader", { y: "-100%", duration: 1, delay: 0.3, ease: "power4.inOut" })
+                    .from(".hero-anim", { y: 30, opacity: 0, duration: 1.2, stagger: 0.2, ease: "power3.out" }, "-=0.5")
+                    .call(() => {
+                        // Trigger Scramble on Hero Name after loader
+                        const els = document.querySelectorAll('.scramble-text');
+                        els.forEach(el => {
+                            const fx = new TextScramble(el);
+                            fx.setText(el.getAttribute('data-text'));
+                        });
+                    });
+
+            // Scroll Reveals
+            gsap.registerPlugin(ScrollTrigger);
+            gsap.utils.toArray('.scroll-reveal').forEach(element => {
+                gsap.fromTo(element, 
+                    { y: 40, opacity: 0 },
+                    {
+                        y: 0, opacity: 1, duration: 1, ease: "power3.out",
+                        scrollTrigger: { trigger: element, start: "top 85%" }
+                    }
+                );
+            });
+
+            // Connection Animation
+            const tlConnection = gsap.timeline({
+                scrollTrigger: { trigger: "#connection-line", start: "top 70%" }
+            });
+            
+            tlConnection
+            .to("#connection-line", { width: "calc(100% - 32px)", duration: 1.5, ease: "power2.inOut" })
+            .to(".signal-dot", { opacity: 1, duration: 0.3 })
+            .to(".signal-dot", { 
+                left: "100%", 
+                duration: 1, 
+                ease: "power2.in"
+            })
+            .call(() => {
+                triggerShockwave();
+                
+                // HAPTIC FEEDBACK (Double Heartbeat)
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100]); 
+                }
+
+                gsap.to("#tanishka-dot", { 
+                    backgroundColor: "#D4AF37", 
+                    boxShadow: "0 0 40px 10px rgba(212,175,55,1)", 
+                    scale: 1.3, duration: 0.1, yoyo: true, repeat: 1
+                });
+                gsap.to("#tanishka-glow-ring", { opacity: 1, duration: 0.5 });
+                gsap.to("#tanishka-ping", { opacity: 1, duration: 0.5 });
+            })
+            .to(".signal-dot", { 
+                left: "0%", 
+                duration: 2, repeat: -1, yoyo: true, ease: "power1.inOut", delay: 0.1 
+            });
+
+            // Typewriter Letter
+            const letterBtn = document.getElementById('read-letter-btn');
+            const letterContent = document.getElementById('letter-content');
+            const typewriterContainer = document.getElementById('typewriter-text');
+            const signature = document.getElementById('letter-signature');
+            const message = `I made this because sometimes text messages aren't enough to show you how much I care. Being away from you is the hardest thing I do, but loving you is the easiest.\n\nYou are the luxury in my life, the gold dust in my ordinary days. I wanted you to have something that is just yours.\n\nI miss you.`;
+            let isOpen = false;
+            let isTyping = false;
+            let typeInterval;
+
+            letterBtn.addEventListener('click', () => {
+                if (!isOpen) {
+                    letterContent.style.height = "400px";
+                    letterBtn.innerText = "Close Letter";
+                    letterBtn.classList.add("bg-gold-500", "text-black", "border-transparent");
+                    letterBtn.classList.remove("bg-gold-500/10", "text-gold-300", "border-gold-500/30");
+                    
+                    if(!isTyping && typewriterContainer.innerText === "") {
+                        isTyping = true;
+                        typewriterContainer.classList.add("typing");
+                        let i = 0;
+                        typeInterval = setInterval(() => {
+                            if (i < message.length) {
+                                let char = message.charAt(i);
+                                if(char === '\n') char = '<br>';
+                                typewriterContainer.innerHTML += char;
+                                i++;
+                                letterContent.scrollTop = letterContent.scrollHeight;
+                            } else {
+                                clearInterval(typeInterval);
+                                typewriterContainer.classList.remove("typing");
+                                gsap.to(signature, { opacity: 1, duration: 1, delay: 0.5 });
+                                isTyping = false;
+                            }
+                        }, 30);
+                    }
+                    createHearts(letterBtn);
+                } else {
+                    letterContent.style.height = "0px";
+                    letterBtn.innerText = "Touch to Read";
+                    letterBtn.classList.remove("bg-gold-500", "text-black", "border-transparent");
+                    letterBtn.classList.add("bg-gold-500/10", "text-gold-300", "border-gold-500/30");
+                }
+                isOpen = !isOpen;
+            });
+        });
+
+        function createHearts(element) {
+            const rect = element.getBoundingClientRect();
+            for(let i=0; i<10; i++) {
+                const heart = document.createElement('div');
+                heart.innerHTML = `<i data-lucide="heart" fill="#D4AF37"></i>`;
+                heart.style.position = 'fixed';
+                heart.style.color = '#D4AF37';
+                heart.style.left = (rect.left + Math.random() * rect.width) + 'px';
+                heart.style.top = rect.top + 'px';
+                heart.style.pointerEvents = 'none';
+                heart.style.zIndex = '100';
+                document.body.appendChild(heart);
+                lucide.createIcons();
+                gsap.to(heart, {
+                    y: -150 - Math.random() * 50,
+                    x: (Math.random() - 0.5) * 60,
+                    opacity: 0,
+                    scale: 0.5 + Math.random(),
+                    duration: 1.5 + Math.random(),
+                    ease: "power2.out",
+                    onComplete: () => heart.remove()
+                });
+            }
+        }
+    </script>
+</body>
+</html>
